@@ -1,0 +1,772 @@
+{% comment %}
+Copyright 2012 Julie Smith.  All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+This is the Django template used by tasks-backup.py to display progress to the user, and once the backup is complete,
+to allow the user to choose what to do with the retrieved data (export as file, email, or display as a web page).
+
+
+We store the user's selections in a cookie when a form is submitted. This is so that we can set the user's last 
+chosen options when we return to this page, especially if returning after re-authenticating, but also useful 
+when user returns from displaying tasks web page display.
+
+Note that this page uses the include_completed, include_hidden and include_deleted variables to selectively include/exclude 
+the relevant parts of Javascript and HTML for those functions. Whether these options are available depends on
+the selections that the user made when they started the backup.
+
+{% endcomment %}
+<!doctype html>
+<html>
+    <head>
+        {% if status == "Starting" or status = "Initialising" or status == "Building"  or status == "Importing" %}
+            <meta http-equiv="refresh" content="{{ refresh_interval }}">
+        {% endif %}
+        
+        <title>{{ app_title }}</title>
+        <link rel="stylesheet" type="text/css" href="/static/tasks_backup.css" />
+        <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+        
+        <script type="text/javascript" src="/static/jquery.js"></script>
+        <script type="text/javascript" src="/static/popup.js"></script>
+        <script language="javascript" type="text/javascript" src="/static/datetimepicker.js">
+            //Date Time Picker script- by TengYong Ng of http://www.rainforestnet.com
+            //Script featured on JavaScript Kit (http://www.javascriptkit.com)
+            //For this script, visit http://www.javascriptkit.com 
+        </script>
+        
+        <script type="text/javascript">
+            
+            // Store format and display selection (until user's browser session ends)
+            function storeSelections(actionId) {
+                createCookie('export_format', $('input[name=export_format]:checked').val(), 0); // Radio button
+                createCookie('due_selection', $('input[name=due_selection]:checked').val(), 0); // Radio button
+                createCookie('due_year', $('input[name=due_year]').val(), 0); // Hidden input
+                createCookie('due_month', $('input[name=due_month]').val(), 0); // Hidden input
+                createCookie('due_day', $('input[name=due_day]').val(), 0); // Hidden input
+                createCookie('display_invalid_tasks', $('input[name=display_invalid_tasks]:checked').val(), 0); // Checkbox
+                createCookie('display_due_date_field', $('input[name=display_due_date_field]:checked').val(), 0); // Checkbox
+                {% if include_completed %}
+                    createCookie('display_completed_tasks', $('input[name=display_completed_tasks]:checked').val(), 0); // Checkbox
+                    createCookie('dim_completed_tasks', $('input[name=dim_completed_tasks]:checked').val(), 0); // Checkbox
+                    createCookie('display_completed_date_field', $('input[name=display_completed_date_field]:checked').val(), 0); // Checkbox
+                {% endif %}
+                {% if include_hidden %}
+                    createCookie('display_hidden_tasks', $('input[name=display_hidden_tasks]:checked').val(), 0); // Checkbox
+                {% endif %}
+                {% if include_deleted %}
+                    createCookie('display_deleted_tasks', $('input[name=display_deleted_tasks]:checked').val(), 0); // Checkbox
+                {% endif %}
+                createCookie('display_updated_date_field', $('input[name=display_updated_date_field]:checked').val(), 0); // Checkbox
+                createCookie('actionId', actionId, 0)
+            }
+            
+            // Restore the user's previous selections
+            function restoreSelections() {
+                var efVal = readCookie('export_format');
+                if (efVal != null && efVal != '') {
+                    $('input:radio[name=export_format][value=' + efVal + ']').click(); // Radio button
+                }
+                var dsVal = readCookie('due_selection');
+                if (dsVal != null && dsVal != '') {
+                    $('input:radio[name=due_selection][value=' + dsVal + ']').click(); // Radio button
+                }
+                setDateFields(readCookie('due_day'), readCookie('due_month'), readCookie('due_year'));
+                $('input[name=display_invalid_tasks]').prop('checked', (readCookie('display_invalid_tasks')=='True')); // Checkbox
+                {% if include_completed %}
+                    $('input[name=display_completed_tasks]').prop('checked', (readCookie('display_completed_tasks')=='True')); // Checkbox
+                    $('input[name=dim_completed_tasks]').prop('checked', (readCookie('dim_completed_tasks')=='True')); // Checkbox
+                    $('input[name=display_completed_date_field]').prop('checked', (readCookie('display_completed_date_field')=='True')); // Checkbox
+                {% endif %}
+                {% if include_hidden %}
+                    $('input[name=display_hidden_tasks]').prop('checked', (readCookie('display_hidden_tasks')=='True')); // Checkbox
+                {% endif %}
+                {% if include_deleted %}
+                    $('input[name=display_deleted_tasks]').prop('checked', (readCookie('display_deleted_tasks')=='True')); // Checkbox
+                {% endif %}
+                $('input[name=display_due_date_field]').prop('checked', (readCookie('display_due_date_field')=='True')); // Checkbox
+                $('input[name=display_updated_date_field]').prop('checked', (readCookie('display_updated_date_field')=='True')); // Checkbox
+            }
+            
+            function createCookie(name,value,days) {
+                // From http://www.quirksmode.org/js/cookies.html
+                // If days = 0, the cookie is deleted when the user closes the browser. 
+                // If days < 0, the cookie is deleted immediately.
+                if (days) {
+                    var date = new Date();
+                    date.setTime(date.getTime()+(days*24*60*60*1000));
+                    var expires = "; expires="+date.toGMTString();
+                }
+                else var expires = "";
+                document.cookie = name+"="+value+expires+"; path=/";
+            }
+
+            function readCookie(name) {
+                // From http://www.quirksmode.org/js/cookies.html
+                var nameEQ = name + "=";
+                var ca = document.cookie.split(';');
+                for(var i=0;i < ca.length;i++) {
+                    var c = ca[i];
+                    while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+                }
+                return null;
+            }
+
+            function eraseCookie(name) {
+                // From http://www.quirksmode.org/js/cookies.html
+                createCookie(name,"",-1);
+            }        
+        
+            function disableDisplayHtmlButton() {
+                document.getElementById("display-tasks-button").value = "Building display page (this may take many minutes) ...";
+                document.getElementById("display-tasks-button").innerHTML = "Building display page (this may take many minutes) ...";
+                document.getElementById("display-tasks-button").disabled = true;
+                // Also disable retrieve button, since clicking it after display button 
+                // has been clicked, results in display process being interrupted. 
+                // Display button stays disabled, user get selected download file, 
+                // but user never sees the display page.
+                document.getElementById("retrieve-tasks-button").disabled = true;
+            }
+            
+            // Set sensible suboptions when user selects "display completed tasks"
+            function changeCompletedSuboptions() {
+                if (document.getElementById("display_completed_tasks").checked) 
+                {
+                    document.getElementById("dim_completed_tasks").checked = true; // Default
+                    document.getElementById("dim_completed_tasks").disabled = false;
+                    document.getElementById("display_completed_date_field").checked = true;
+                    document.getElementById("display_completed_date_field").disabled = false;
+                } else {
+                    document.getElementById("dim_completed_tasks").checked = false;
+                    document.getElementById("dim_completed_tasks").disabled = true;
+                    document.getElementById("display_completed_date_field").checked = false;
+                    document.getElementById("display_completed_date_field").disabled = true;
+                }
+            }
+            
+            // Uncheck "display completed tasks" is user selects a due date, as completed tasks 
+            // are not displayed when user selects only due tasks
+            function changeCompletedOptions() {
+                if (document.getElementById("due_selection_any_due").checked ||
+                    document.getElementById("due_selection_due_now").checked ||
+                    document.getElementById("due_selection_overdue").checked)
+                {
+                    e = false;
+                } else {
+                    e = true;
+                }
+                document.getElementById("display_completed_tasks").checked = e;
+                changeCompletedSuboptions();
+            }
+            
+            // If a completed sub-option is selected, then "display completed tasks" must be selected
+            function changeDisplayCompleted() {
+                if (document.getElementById("dim_completed_tasks").checked ||
+                    document.getElementById("display_completed_date_field").checked) 
+                {
+                    document.getElementById("display_completed_tasks").checked = true;
+                }
+            }
+            
+            // Set hidden date value fields, and display date in human-friendly format
+            function setDateFields(day, month, year) {
+                // Also called when a user clicks on a date in the calendar created by datetimepicker.js
+                // Each date cell created by GenCell() is a link to this javascript method, with the
+                // appropriate day, month, year values.
+                document.getElementById("due_year").value = Number(year);
+                document.getElementById("due_month").value = Number(month);
+                document.getElementById("due_day").value = Number(day);
+                yearStr = "0000" + year.toString();
+                yearStr = yearStr.substring(yearStr.length - 4);
+                monthStr = "00" + month.toString();
+                monthStr = monthStr.substring(monthStr.length -2);
+                dayStr = "00" + day.toString();
+                dayStr = dayStr.substring(dayStr.length - 2);
+                document.getElementById("due_date").innerHTML = yearStr + "-" + monthStr + "-" + dayStr;
+            }
+            
+            
+            // Set the current date, which is used to filter due tasks.
+            function setCurrentDueDate() {
+                // We take the date from the browser, so that the due date is today in the user's current timezone is used
+                var today = new Date();
+                // JS month == 0..11, so add one to .getMonth()
+                setDateFields(today.getDate(), 1 + today.getMonth(), today.getFullYear());
+            }
+            
+            // Various actions to take when page is loaded. Actions depend on whether there are any previous settings stored in cookies.
+            function pageLoadActions() {
+                {% if status == "Export completed" %}
+                    // Check if there are any stored values, by retrieving the 'export_format' cookie, because we always save that cookie.
+                    var export_format = readCookie('export_format')
+                    if (export_format) 
+                    {
+                        // 'export_format' cookie exists, so there are saved values that we should use
+                        restoreSelections();
+                        // Check if the user's selection was actioned in ReturnResultsHandler.post() in tasks-backup.py
+                        //     If authentication is OK, the actionId cookie is deleted in ReturnResultsHandler.post()
+                        //         and the user's selection is actioned
+                        //     If authentication failed when the user's selection was submitted to /results, 
+                        //         then the user's selection was NOT actioned, so we do it here.
+                        var actionId = readCookie('actionId');
+                        if (actionId) {
+                            eraseCookie('actionId');
+                            // Perform the action that the user selected
+                            $('#' + actionId).click();
+                        }
+                    }
+                    else 
+                    {
+                        // No stored values, so set up defaults
+                        {% if include_completed %}
+                            changeCompletedSuboptions(); 
+                            changeCompletedOptions(); 
+                            changeDisplayCompleted(); 
+                        {% endif %}
+                        setCurrentDueDate();
+                    }
+                {% endif %}
+            }
+        
+        </script>
+        <script type="text/javascript">
+
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-30118203-1']);
+          _gaq.push(['_trackPageview']);
+
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+
+        </script>
+    </head>
+
+<body onload="pageLoadActions();" > 
+    <div class="usertitle">
+        Authorised user: {{ user_email }} <span class="logout-link">[ <a href="{{ logout_url }}">Log out</a> ]</span>
+    </div>
+
+    <noscript>
+        <br />
+        <h3>Javascript must be enabled for full application functionality</h3>
+        <br />
+    </noscript>
+    
+    {% if host_msg %}
+        <div class="break">
+            <h3>{{ host_msg }}</h3>
+        </div>
+    {% endif %}
+
+    {% if msg %}
+        <div class="break">
+            <p>Msg = {{ msg }}</p>
+		</div>
+    {% endif %}
+    
+    {% if status == "no-record" %}
+        <div class="huge-break">
+            <div class="medium-break take-note-larger">
+                {% if job_msg %}
+                    {{ job_msg }}
+                {% else %}
+                    No backup found for {{ user_email }}
+                {% endif %}
+            </div>
+            <div class="break">
+                <button onclick="window.location.href = '{{ url_main_page }}'" class="back-button"  value="Go to Main Menu">Go to Main Menu</button>
+                <span class="take-note-larger"> to start a backup</span>
+            </div>
+            <div class="break">
+                If you believe this to be an error, please <a href="http:/{{ url_issues_page }}">create an error report</a>
+            </div>
+        </div>
+    {% else %}
+        
+        
+        {% if status == "Starting" or status = "Initialising" or status == "Building" %}
+            <div class="break">
+                This page will auto-refresh every {{ refresh_interval }} seconds to indicate how many tasks have been retrieved so far.
+            </div>
+        {% endif %}
+        
+        {% if status == "Export completed" %}
+            <div class="break">
+                {{ job_msg }} <img class="popupTrigger" id="export-completed" src="/static/help.png" alt="Display help">
+                <div class="popupContent" id="export-completed-content">
+                    <img class="popupClose" border="0" src="/static/close.png" alt="Close">
+                    <div class="clear medium-break">
+                        This backup is a snapshot of tasks as at {{ job_start_timestamp }} UTC 
+                        and will not reflect changes made after that time. 
+                        You will need to rerun <a href="{{ url_main_page }}" >{{ app_title }}</a>
+                        to create a new backup.
+                    </div>
+                </div>
+                {% if include_completed %}
+                    <br/>
+                    <span class="comment">Includes completed tasks</span>
+                {% else %}
+                    <br/>
+                    <span class="comment">Excludes completed tasks</span>
+                {% endif %}
+                {% if include_hidden %}
+                    <br/>
+                    <span class="comment">Includes hidden tasks</span>
+                {% endif %}
+                {% if include_deleted %}
+                    <br/>
+                    <span class="comment">Includes deleted tasks</span>
+                {% endif %}
+            </div>
+        {% else %}
+            {% if status == "Starting" %}
+                <div class="break">
+                    Starting new backup job, please wait (this may take up to 2 minutes) ...
+                </div>
+            {% else %}
+                <div class="break">
+                    Status = {{ status }}
+                </div>
+            {% endif %}
+            {% if progress > 0 %}
+                <div class="break">
+                    Progress = {{ progress }}
+                </div>
+            {% endif %}
+            {% if job_msg %}
+                <div class="break">
+                    {{ job_msg }}
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+            
+    
+    {% if error_message %}
+        <br />
+        <br />
+        <br />
+        <div class="take-note break">
+            {{ error_message }}
+        </div>
+        <div class="break">
+            Please report this error at <a href="http:/{{ url_issues_page }}">{{ url_issues_page }}</a>
+        </div>
+        <br />
+        <br />
+        <br />
+    {% endif %}
+    
+    {% if status == "Export completed" %}
+        <!-- Choose format to return backup data -->
+        <form method="POST" action="{{ results_url }}" onsubmit="storeSelections('retrieve-tasks-button');" >
+        
+			<fieldset>
+				<legend>Export all tasks</legend>
+				<table  cellspacing="0" class="format-selection">
+					<!--<col width="20%">
+					<col width="80%">-->
+					<tr>
+						<td class="format-name">
+							<input id="format_outlook" type="radio" name="export_format" value="outlook" checked="checked" /> Outlook CSV<br />
+						</td>
+						<td>
+							CSV file suitable for importing into Outlook.
+						</td>
+					</tr>
+					<tr>
+						<td class="format-name">
+							<input id="format_ics" type="radio" name="export_format" value="ics" /> iCal ICS<br />
+						</td>
+						<td>
+							iCal .ICS file suitable for importing into many calendar applications.
+						</td>
+					</tr>
+					<tr>
+						<td class="format-name">
+							<input id="format_raw" type="radio" name="export_format" value="raw" /> Raw CSV<br />
+						</td>
+						<td>
+							CSV file containing almost all available properties for each task.
+                            <br />
+                            See the <a href="/static/info.html">information page</a> for details.
+						</td>
+					</tr>
+					<tr>
+						<td class="format-name">
+							<input id="format_raw1" type="radio" name="export_format" value="raw1" /> Raw CSV, formatted dates<br />
+						</td>
+						<td>
+							Same as Raw CSV, but with date/timestamps formatted suitable for reading by Excel.
+						</td>
+					</tr>
+                    
+					<tr>
+						<td class="format-name">
+							<input id="format_import_export" type="radio" name="export_format" value="gtb" /> Import/Export GTBak<br />
+						</td>
+						<td>
+							The GTBak format is designed to be used by 
+                            <a href="http://import-tasks.appspot.com">Import Google Tasks</a> to import tasks.
+                            Unlike the CSV format, this format retains international and extended characters.
+                            <img class="popupTrigger" id="help-gtb" src="/static/help.png" alt="Display help">
+                            <div class="popupContent" id="help-gtb-content">
+                                <img class="popupClose" border="0" src="/static/close.png" alt="Close">
+                                <div class="clear medium-break">
+                                    This format is used by 
+                                    <a class="take-note" href="http://import-tasks.appspot.com">Google Tasks Import</a>, which 
+                                    can be used to import tasks into the same or a different Google account.
+                                </div>
+                                <div class="medium-break">
+                                    Whereas the CSV format may lose international and extended characters, this format should retain all characters.
+                                </div>
+                                <div class="medium-break">
+                                    Unlike the CSV format, the GTBak format is not easily edited by the user. The file is encoded using Python 
+                                    <a href="http://docs.python.org/library/pickle.html">pickle serialisation</a> to ensure that no extended character information is lost or modified.
+                                </div>
+                                <div class="medium-break">
+                                    This format backs up everything except Task Links. 
+                                </div>
+                                <div class="comment medium-break ">
+                                    As far as I am aware, the only use for Task Links is when an email message is turned into a task; 
+                                    the link then refers to the original email message.
+                                    If tasks are restored into a different account, Task Links would not work (because they would refer to messages in another account).
+                                </div>
+                            </div>
+						</td>
+					</tr>
+
+					<tr>
+						<td class="format-name">
+							<input id="format_import_export" type="radio" name="export_format" value="import_export" /> Import/Export CSV&nbsp;
+                            <img class="popupTrigger" id="help-import_export_csv" src="/static/warning.png" alt="Display warning">
+                            <div class="popupContent" id="help-import_export_csv-content">
+                                <img class="popupClose" border="0" src="/static/close.png" alt="Close">
+                                <div class="clear medium-break force-normal-white-space">
+                                    <span class="take-note" style="color:red;">CAUTION:</span> The CSV format may lose or incorrectly interpret international 
+                                    or extended characters. To ensure maximum character integrity when importing tasks using  
+                                    <span class="take-note">Google Tasks Import</span>, use the <span class="take-note">GTBak</span> format instead.
+                                </div>
+                            </div>
+                            
+                            <br />
+						</td>
+						<td>
+							CSV file containing just the data required to recreate tasks. 
+                            <img class="popupTrigger" id="help-import_export" src="/static/help.png" alt="Display help">
+                            <div class="popupContent" id="help-import_export-content">
+                                <img class="popupClose" border="0" src="/static/close.png" alt="Close">
+                                <div class="clear medium-break">
+                                    See the <a href="/static/info.html#import_export_description">information page</a> for details of the file format.
+                                </div>
+                                <div class="medium-break">
+                                    This format can be used by 
+                                    <a class="take-note" href="http://import-tasks.appspot.com">Google Tasks Import</a>, which 
+                                    can be used to import tasks into the same or a different Google account. 
+                                </div>
+                                <div class="medium-break">
+                                    The file can be edited in a text editor such as <a href="http://notepad-plus-plus.org/">Notepad++</a>
+                                    before being imported. It is not recommended to edit this file with a spreadsheet program, 
+                                    as programs such as Excel and OpenOffice Calc tend to corrupt the data.
+                                </div>
+                                <div class="medium-break">
+                                    <span class="take-note" style="color:red;">CAUTION:</span> The CSV format may lose or incorrectly interpret international 
+                                    or extended characters. To ensure maximum character integrity when importing tasks using  
+                                    <span class="take-note">Google Tasks Import</span>, use the <span class="take-note">GTBak</span> format instead.
+                                </div>
+                                <div class="medium-break">
+                                    This format backs up everything except Task Links. 
+                                </div>
+                                <div class="comment medium-break ">
+                                    As far as I am aware, the only use for Task Links is when an email message is turned into a task; 
+                                    the link then refers to the original email message.
+                                    If tasks are restored into a different account, Task Links would not work (because they would refer to messages in another account).
+                                </div>
+                            </div>
+						</td>
+					</tr>
+                    
+                    <tr>
+                        <td class="format-name">
+                            <input id="format_python" type="radio" name="export_format" value="py" /> Python<br />
+                        </td>
+                        <td>
+                            Python data structure. Contains all the properties stored by Google for each task. 
+                            See the <a href="/static/info.html">information page</a> for details.
+                        </td>
+                    </tr>
+                    
+{% if show_log_option %}                     
+					<tr>
+						<td class="format-name">
+							<input id="format_log" type="radio" name="export_format" value="log" /> Log file<br />
+						</td>
+						<td>
+							Data used to check task order
+						</td>
+					</tr>
+{% endif %}                    
+
+					<tr>
+						<td class="format-name">
+							<input id="format_RTM" type="radio" name="export_format" value="RTM" /> RTM email<br />
+						</td>
+						<td>
+							Email tasks in Remember The Milk format.
+                            <img class="popupTrigger" id="help-rtm" src="/static/help.png" alt="Display help">
+                            <div class="popupContent" id="help-rtm-content">
+                                <img class="popupClose" src="/static/close.png" alt="Close">
+                                <ol class="clear">
+                                    <li>
+                                        Attempting to email very large tasklists may fail due to App Engine email quota limits.
+                                    </li>
+                                    <li>
+                                        It appears that RTM will not import more than 50 tasks.
+                                    </li>
+                                    <li>
+                                        Any header text must be removed before forwarding the received email to your RTM import email address. The first line in the email must be a task.
+                                    </li>
+                                </ol>
+                            </div>
+						</td>
+					</tr>
+                </table>
+				<br />
+
+				<button type="submit" id="retrieve-tasks-button" class="big-button" value="Retrieve tasks data">Retrieve tasks data</button>
+			</fieldset>
+        </form>
+        
+        <div class="break">
+        </div>
+        
+
+        <form method="POST" action="{{ results_url }}" onsubmit="storeSelections('display-tasks-button'); disableDisplayHtmlButton();" >
+        
+            <input type="hidden" name="export_format" value="html_raw" />
+            <input type="hidden" name="job_start_timestamp" value="{{ job_start_timestamp }}" />
+            
+            <!-- These values are set by setDateFields(), which is originally called by setCurrentDueDate() on page load.
+                 setDateFields() is also called when the user clicks on a date the date picker form.
+            -->
+            <input type="hidden" id="due_year" name="due_year" value="0001" />
+            <input type="hidden" id="due_month" name="due_month" value="1" />
+            <input type="hidden" id="due_day" name="due_day" value="1" />
+            
+            
+			<fieldset>
+				<legend>
+                    Display all tasks as a single web page, suitable for printing
+                    <img class="popupTrigger" id="help-display" src="/static/help.png" alt="Display help">
+                </legend>
+                <div class="popupContent" id="help-display-content">
+                    <img class="popupClose" src="/static/close.png" alt="Close">
+                    <div class="clear medium-break">
+                        The resultant web page will contain all the tasks in all the task lists. 
+                        Tasks will be indented to display task/sub-task relationships.
+                    </div>
+                    <div class="medium-break">
+                        There is no pretty formatting, so a page break may occur in the middle of a task.
+                    </div>
+                    <div class="medium-break">
+                        Note that the resultant printout can be MANY pages (especially when tasks have notes). 973 tasks in 7 tasklists resulted in 141 pages.
+                    </div>
+                </div>
+                <div class="format-selection">
+                    <div class="left-column">
+                        <div class="selection-column-header">
+                            Filter by due date <span id="due_date" class="due_date" onclick="javascript:NewCal('due_date')" >0001-01-01</span>&nbsp;
+                            <button type="button" onclick="javascript:NewCal('due_date')" >
+                                Choose date&nbsp; 
+                                <img src="/static/cal.gif" width="16" height="16" border="0" alt="Set due date filter">
+                            </button>&nbsp;
+                            or&nbsp;<button type="button" onclick="setCurrentDueDate()" >Use today</button>
+	  		
+                        </div>
+                        <noscript>
+                            <br />
+                            <span class="take-note">Javascript must be enabled to determine current date, and to enable date to be set</span>
+                            </noscript>
+                        </input>
+                        <ul class="format-selection">
+                            <li>
+                                <input id="due_selection_all" type="radio" name="due_selection" value="all"  checked="checked"
+                                       onchange="changeCompletedOptions();" />
+                                <label for="due_selection_all">All tasks</label>
+                            </li>
+                            <li>
+                                <input id="due_selection_any_due" type="radio" name="due_selection" value="any_due"
+                                       onchange="changeCompletedOptions();" />
+                                <label for="due_selection_all">Any tasks with a due date (incl future due)</label>
+                            </li>
+                            <li>
+                                <input id="due_selection_due_now" type="radio" name="due_selection" value="due_now"
+                                       onchange="changeCompletedOptions();" />
+                                <label for="due_selection_all">Tasks due on or before selected date</label>
+                            </li>
+                            <li>
+                                <input id="due_selection_overdue" type="radio" name="due_selection" value="overdue" 
+                                       onchange="changeCompletedOptions();" />
+                                <label for="due_selection_all">Overdue only (due before selected data)</label>
+                            </li>
+                            <li>
+                                <input id="due_selection_none" type="radio" name="due_selection" value="none" 
+                                       onchange="changeCompletedOptions();" />
+                                <label for="due_selection_none">No due date</label>
+                            </li>
+                        </ul>
+                        <div class="selection-column-header">Other task filters</div>
+                        <ul class="format-selection">
+                            <li>
+                                <input type="checkbox" name="display_invalid_tasks" value="True" >
+                                    &nbsp;Display parentless, invalid and corrupted tasks? 
+                                    <img class="popupTrigger" id="help-invalid" src="/static/help.png" alt="Display help">
+                                    <img class="popupTrigger" id="help-invalid" src="/static/warning.png" alt="Display warning">
+                                    <div class="popupContent" id="help-invalid-content">
+                                        <img class="popupClose" src="/static/close.png" alt="Close">
+                                        <div class="clear medium-break">
+                                            <span style="color:red;">CAUTION:</span>  It is possible for subtasks to end up in an invalid state, where a subtask's parent is missing, or may not be exported. GTB marks these tasks as invalid, and does not export them to file or email. Refer to <a href="/static/info.html#note4">notes 4 and 5 on the information page</a> for more details.
+                                        </div>
+                                        <div class="clear medium-break">
+                                            If this option is checked, parentless tasks will be displayed and labeled as 
+                                            <span class="no-break task-attribute-hidden-or-deleted dim">-&nbsp;Invalid&nbsp;-</span>
+                                            on the tasks display page. If this option is unchecked, invalid tasks will not be displayed.
+                                        </div>
+                                    </div>
+                                </input>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="right-column">
+                        <div class="selection-column-header">Display options</div>
+                        <ul class="format-selection">
+                            {% if include_completed %}
+                            <li>
+                                <input type="checkbox" id="display_completed_tasks" name="display_completed_tasks" value="True" 
+                                       checked="checked"  onchange="changeCompletedSuboptions();">
+                                    &nbsp;Display completed tasks?
+                                </input>
+                            </li>
+                            <li>
+                                <ul class="format-selection sub-list">
+                                <li>
+                                    <input type="checkbox" id="dim_completed_tasks" name="dim_completed_tasks" value="True" 
+                                           onchange="changeDisplayCompleted();" checked="checked" >
+                                        &nbsp;Dim completed tasks?
+                                    <img class="popupTrigger" id="help-display-completed" src="/static/help.png" alt="Display help">
+                                    <div class="popupContent" id="help-display-completed-content">
+                                        <img class="popupClose" width="24" height="24" src="/static/close.png" alt="Close">
+                                        <div class="clear">
+                                            <div class="small-break">
+                                                If checked, completed tasks are displayed using a dimmed grey font. 
+                                            </div>
+                                            <div class="small-break">
+                                                If unchecked, completed tasks are displayed normally.
+                                            </div>
+                                            <div class="small-break">
+                                                Hidden and deleted tasks are always dimmed.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </input>
+                                </li>
+                                <li>
+                                    <input type="checkbox" id="display_completed_date_field" name="display_completed_date_field" value="True"  
+                                           onchange="changeDisplayCompleted();" checked="checked" >
+                                        &nbsp;Display completed date field?
+                                    </input>
+                                </li>
+                                </ul>
+                            </li>
+                            {% endif %}
+                            {% if include_hidden %}
+                                <li>
+                                    <input type="checkbox" name="display_hidden_tasks" value="True" checked="checked" >
+                                        &nbsp;Display hidden tasks?
+                                    </input>
+                                </li>
+                            {% endif %}
+                            {% if include_deleted %}
+                                <li>
+                                    <input type="checkbox" name="display_deleted_tasks" value="True" checked="checked" >
+                                        &nbsp;Display deleted tasks?
+                                    </input>
+                                </li>
+                            {% endif %}
+                            
+                            
+                            
+                            
+                            
+                            
+                            <li>
+                                <input type="checkbox" name="display_due_date_field" value="True" checked="checked" >
+                                    &nbsp;Display due date field?
+                                </input>
+                            </li>
+                            <li>
+                                <input type="checkbox" name="display_updated_date_field" value="True" >
+                                    &nbsp;Display updated date field?
+                                </input>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+				<br />
+                
+                    <div class="take-note-para end-columns">
+                    {% if progress >= large_list_html_warning_limit %}
+                        <span class="take-note">CAUTION: You have a very large number of tasks. Attempting to display the tasks page may result in the server running out of memory and/or your browser timing out.
+                        </span>
+                        <br />
+                        You may wish to export your tasks first, before attempting to display the tasks page.
+                    {% endif %}
+                    </div>
+				<button id="display-tasks-button" type="submit" class="big-button" >Display tasks page</button>
+			</fieldset>
+        </form>
+        <div class="break">
+        </div>
+
+    {% endif %}
+
+
+	<div class="project-footer">
+        <div class="break">
+            Version {{ app_version }} ({{ upload_timestamp }})
+        </div>
+        
+		<div class="break">
+			Questions or comments? Go to <a href="http://{{ url_discussion_group }}">{{ url_discussion_group }}</a>
+			or email <a href="mailto:{{ email_discussion_group }}">{{ email_discussion_group }}</a>
+		</div>
+		<div class="break">
+			Please report bugs or suggest improvements at <a href="http:/{{ url_issues_page }}">{{ url_issues_page }}</a>
+		</div>
+		<div class="break">
+			Source code for this project is at <a href="http://{{ url_source_code }}">{{ url_source_code }}</a>
+		</div>
+	</div>
+
+	<div class="backgroundPopup"></div>
+
+</body>
+</html>

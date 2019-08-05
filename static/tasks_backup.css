@@ -1,0 +1,622 @@
+/* Copyright 2011 Google Inc.  All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * OrigAuthor: dwightguth@google.com (Dwight Guth)
+ * Extensively modified by: Julie.Smith.1999@gmail.com (Julie Smith), 2012
+ *
+ * Form styling ideas from http://www.webcredible.co.uk/user-friendly-resources/css/css-forms.shtml
+ *
+ */
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  max-width: 1024px;
+  margin: auto;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+fieldset
+{
+	border: 1px solid #781351;
+	padding-top: 10px;
+}
+
+fieldset fields { 
+  clear: both;
+} 
+
+ol {
+    padding-left: 20px;
+}
+    
+ol li{
+    padding-top: 3px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+}
+
+ul li{
+    padding-top: 3px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+}
+
+.popupContent ol {
+    padding-left: 15px !important;
+    margin-left:10px;
+}
+
+.popupContent ul {
+    padding-left: 5px;
+    margin-left:10px;
+}
+
+.radio-button-left
+{
+   float: left;
+   margin-right: 8px;
+}
+
+.radio-button-text
+{
+    float: left;
+    width: 90%; /* Adjust this value to fit */
+}
+
+input.choose_display_format { 
+  float: left;
+  display: block;
+} 
+
+label.choose_display_format { 
+  position: relative;
+  margin-left: 30px;
+  display: block;
+} 
+
+.instructions {
+    margin-left: 45px;
+    margin-right: 45px;
+    margin-top: 12px;
+    margin-bottom: 20px;
+}
+
+div.select-import-file {
+    margin-left: 12px;
+    margin-right: 12px;
+    margin-top: 12px;
+    margin-bottom: 15px;
+}
+
+.sample-image {
+    margin-left: 30px;
+    margin-bottom:10px;
+    width:80%;
+}
+
+.smaller-font {
+    font-size: smaller;
+}
+
+.task-sample {
+    margin-left: 30px;
+    font-size: smaller;
+}
+
+
+legend
+{
+	/* color: #fff; */
+	background: #ffa20c;
+	border: 1px solid #781351;
+	padding: 2px 6px;
+    font-weight: bold;
+}
+
+.info-ul > ul > li {
+    margin-bottom: 5px;
+}
+
+.fixed-font {
+    font-family: "Courier New", Courier, monospace;
+    white-space: nowrap;
+}
+
+.italic{
+    font-style: italic;
+}
+
+.property-name {
+  font-weight: bold;
+  font-family: "Courier New", Courier, monospace;
+  color: #74bC00;
+  font-size: larger;
+}
+
+.view-tr {
+    text-align:left;
+    vertical-align: top;
+}
+
+.minor-heading {
+    font-weight: bold;
+    margin-top:12px;
+    margin-bottom:6px;
+}
+  
+.take-note {
+  font-weight: bold;
+}
+
+.no-break {
+    white-space:nowrap;
+}
+
+
+.take-note-larger {
+    font-weight: bold;
+    font-size: larger;
+}
+
+.nice-gap-top {
+    margin-top:6px;
+}
+
+.import-completed-message {
+    margin-top:60px;
+    margin-left:30px;
+    margin-bottom:20px;
+}
+
+.take-note-smaller {
+    font-weight: bold;
+    font-size: smaller;
+}
+
+.take-note-para {
+    font-size: larger;
+    margin-left: 35px;
+    margin-bottom: 10px;
+    /* margin-top: 10px; */
+    margin-right: 35px;
+}
+
+.heading {
+  font-weight: bold;
+  font-size: 12pt;
+  margin: 6px;
+}
+
+.break {
+  margin-bottom: 20px !important;
+}
+
+.huge-break {
+  margin-top: 60px !important;
+  margin-bottom: 60px !important;
+}
+
+.small-break {
+  margin-bottom: 6px !important;
+}
+
+.medium-break {
+  margin-top: 10px !important;
+  margin-bottom: 5px !important;
+}
+
+.disabled {
+  color: grey;
+}
+
+.fieldname {
+  font-weight: bold;
+}
+
+.project-footer {
+	/* Project info at bottom of every page */
+	font-style: italic;
+	font-size: smaller;
+	margin-top: 40px;
+	margin-left: 30px;
+	margin-bottom: 20px;
+	margin-right: 30px;
+}
+
+.logout-link {
+  margin-left: 20px;
+  font-size: smaller;
+}
+
+.comment {
+  margin-left: 20px;
+  font-style:italic;
+}
+
+.usertitle {
+  text-align: right;
+  font-size: 12pt;
+  font-weight: bold;
+  padding-right: 10px;
+  margin-bottom: 20px;
+}
+
+.tasklist-link {
+  text-align: right;
+  font-weight: bold;
+  padding-right: 10px;
+  margin-bottom: 6px;
+}
+
+.fieldlabel {
+  font-weight: bold;
+}
+
+ul.choose-import-method {
+  list-style-type: none;
+  padding-left: 1.8em;
+  padding-bottom: 20px;
+}
+
+.task-title  {
+  display: inline-block;
+  font-weight: bold;
+  margin-bottom:5px;
+}
+
+.task-details-html1 {
+  padding-left: 25px;
+  padding-bottom: 15px;
+}
+
+.task-attribute-hidden-or-deleted {
+  font-weight: bold;
+  font-style: italic;
+}
+
+form td:first-child {
+  padding-right:20px;
+}
+
+.product-desc {
+  padding: 10px;
+  vertical-align: top;
+}
+
+td.action-button {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+table.include-selection {
+	border-collapse:separate;
+	/* border-spacing:25px 6px; */ /* Horiz, vert */
+    border-spacing:10px 5px; /* Horiz, vert */
+    border-style:solid;
+    padding-bottom: 7px;
+    margin-top:10px;
+    margin-left:45px;
+    margin-bottom:10px;
+}
+
+table.include-selection td{
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 5px;
+}
+
+
+div.selection-column-header {
+    padding-top:5px;    
+    font-weight: bold;
+    }
+
+table.format-selection {
+	border-collapse:separate;
+	/*border-spacing:5px 10px; /* Horiz, vert */
+    border-spacing:5px 5px; /* Horiz, vert */
+}
+
+table.format-selection td{
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-left: 5px;
+}
+
+ul.format-selection {
+    list-style-type:none;
+    padding: 0;
+    margin-left: 0;
+    margin-top:3px;
+}
+
+ul.sub-list {
+    margin-left: 15px;
+}
+
+td.format-name {
+	white-space: nowrap;
+	font-weight: bold;
+}
+
+.force-normal-white-space {
+	white-space: normal !important;
+    font-weight: normal;
+}
+
+span.due_date {
+    border-style:solid;
+    padding:3px;
+}
+    
+div.left-column {
+    float:left;
+    width: 60%;
+    padding-left:10px;
+    margin-right:10px;
+}
+    
+div.right-column {
+    float:left;
+    /* width:50%; */
+    padding-left:10px;
+    padding-right:10px;
+}
+    
+div.end-columns {
+    clear:both;
+}
+    
+    
+td.note-heading {
+	white-space: nowrap;
+	font-weight: bold;
+	vertical-align: top;
+}
+	
+td.note-heading-smaller {
+	white-space: nowrap;
+	font-weight: bold;
+	vertical-align: top;
+    font-size: smaller;
+}
+
+td.not-valid {
+    background-color: #e00000;
+    text-align: center; 
+}
+    
+    
+.big-button {
+    cursor: pointer;
+    width: 100%;
+    font-size: 16pt;
+    font-weight: bold;
+}
+
+.medium-button {
+    cursor: pointer;
+    width: 95%;
+    font-size: 16pt;
+    font-weight: bold;
+    /* padding-left:75px; */
+    /*padding-right:25px;*/
+    margin-left:45px;
+    /* margin-right:35px; */
+}
+
+.file-button {
+    /* cursor: pointer; */
+    width: 50%;
+    font-size: 16pt;
+    font-weight: bold;
+}
+
+.back-button {
+    margin-top:15px;
+    font-size: larger;
+    font-weight: bold;
+    padding: 8px 16px 8px 16px;
+}
+
+li.tasklist {
+  padding-bottom: 10px;
+}
+
+span.tasklistname {
+  font-size: larger;
+  font-weight: bold;
+}
+
+div.tasklistheading {
+  margin-bottom: 5px;
+}
+
+.task-html1 {
+  /*  padding-left is set by inline style attribute so that
+   *  Django can set indent according to subtask depth
+   */
+  list-style-type: none;
+  padding-bottom: 10px;
+}
+
+ul.task {
+  list-style-type: none;
+  padding-left: 1.8em;
+  padding-bottom: 20px;
+}
+
+.no-tasks {
+  padding-left: 1.8em; /* match normal tasks indent */
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.tasks {
+    margin-left:25px;
+}
+
+.status-cell {
+  font-weight: bold;
+  margin-bottom: 2px;
+  display: block; 
+  float: left; 
+  clear: left; 
+  width: 25px;
+}
+
+.task-title-html1 {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+
+.status-details {
+  text-indent: -25px;
+  padding-left: 25px;
+}
+
+.task-notes {
+    margin-top: 2px;
+    padding-left: 15px;
+    margin-bottom: 2px;
+}
+
+/*
+div.task-details-html1 div {
+    padding-bottom: 5px;
+}
+*/
+
+.dim {
+  color: Grey;
+}
+
+div.task-attribute {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+div.task-attribute-hidden-or-deleted {
+  margin-top: 2px;
+  margin-bottom: 2px;
+  font-weight: bold;
+  font-style: italic;
+}
+
+/*
+ * For popup windows
+ */
+.backgroundPopup{
+    display:none;
+    position:fixed;
+    _position:absolute; /* hack for internet explorer 6*/
+    top:0;
+    left:0;
+    background:#000000;
+    border:1px solid #cecece;
+    z-index:1;
+    
+    /* 
+     * NOTE: On IE9, height and width 100% only creates a background as big as the visible window, 
+     * minus padding/borders. We set the height and width in the loadPopup() method in popup.js to ensure
+     * that the background fully covers the document. This is especially important if user scrolls, and
+     * tries to click outside the popup to close the popup.
+     * IE9 also ignores opacity, so that is also set in the loadPopup() method.
+     */
+    height:100%; 
+    width:100%;
+}
+
+.popupContent{
+    display:none;
+    /*position:fixed;*/
+    position:absolute; /* hack for internet explorer 6*/
+    width:25%;
+    background:#FFFFFF;
+    border:2px solid #cecece;
+    z-index:2;
+    padding:12px;
+    font-size:13px;
+}
+
+.popupCloseX{
+    font-size:18px;
+    line-height:18px;
+    right:6px;
+    top:4px;
+    position:absolute;
+    color:#6fa5fd;
+    font-weight:700;
+    display:block;
+}
+
+.popupClose{
+    font-size:18px;
+    line-height:18px;
+    float:right;
+}
+
+.clear
+{
+    clear:both;
+}
+
+/*
+ * *********************
+ *    Only for hTodo 
+ * *********************
+ */
+span.completed,
+span.categories,
+span.last-modified {
+  display: none;
+}
+
+div.description {
+  margin-left: 20px;
+}
+
+ul.fake {
+  padding-left: 1.8em;
+  padding-bottom: 20px;
+}
+
+ul.fake > li {
+  padding-top: 10px;
+  list-style-type: none;
+  padding-bottom: 10px;
+}
+
+ul.fake > li.status-completed {
+  list-style-type: none;
+}
+
+ul.fake > li > span.summary {
+  font-weight: bold;
+}
+
+ul.fake > li:before {
+  content: "\2013 \a0 \a0";
+}
+
+ul.fake > li.status-completed:before {
+  content: "\2713 \a0";
+}

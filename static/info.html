@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC
+  "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <title>Information about Google Tasks</title>
+        <link rel="stylesheet" type="text/css" href="/static/tasks_backup.css" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script type="text/javascript">
+            // Copyright 2001 Idocs.com      
+            // Distribute this script freely, but keep this notice in place
+
+            // backlink object initializer
+            function backlink() {
+                this.text = 'Go Back';
+                this.type = 'link';
+                this.write = backlink_write;
+                this.form = true;
+            }
+
+
+            // write method
+            function backlink_write() {
+                if (! window.history) return;
+                if (window.history.length == 0)return;
+
+                this.type = this.type.toLowerCase();
+                if (this.type == 'button') {
+                    if (this.form)
+                        document.write('<form>');
+                    document.write('<input type=button onClick="history.back(-1)" value="', this.text, '"');
+                    if (this.otheratts) document.write(' ', this.otheratts);
+                    document.write('>');
+                    if (this.form)document.write('<\/form>');
+                } else {
+                    document.write('<a href="javascript:history.back(-1)"');
+                    if (this.otheratts)
+                        document.write(' ', this.otheratts);
+                    document.write('>');
+                    if (this.type == 'image' || this.type == 'img') {
+                        document.write('<img src="', this.src, '" alt="', this.text, '"');
+                        if (this.width) document.write(' width=', this.width);
+                        if (this.height) document.write(' height=', this.height);
+                        if (this.otherimgatts) document.write(' ', this.otherimgatts);
+                        document.write(' border=0 />');
+                    }
+                    else
+                        document.write(this.text);
+                    document.write('<\/a>');
+                }
+            }        
+            
+            var gb = new backlink();
+            gb.text = "Back to previous page";
+            gb.type = "button";
+            gb.otheratts = 'class="back-button"';
+            gb.write();
+        </script>
+        <script type="text/javascript">
+
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-30118203-1']);
+          _gaq.push(['_trackPageview']);
+
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+
+        </script>
+    </head>
+  
+  <body>
+    <div class="break">
+    </div>
+    
+    <h2>Background information about Google Tasks data</h2>
+    
+    
+    <div class="break">
+        Note that this information is based on my own discoveries and conclusions as at May 2012. I hope that this information helps people, but I cannot guarantee the accuracy or completeness of this information. Note also that Google may change their specifications, in which case this information may be out of date.
+    </div>
+    
+    <h3>Understanding the Raw and Python data formats</h3>
+    
+    <div class="break">
+        <ul>
+            <li>
+                The <span class="take-note">Python</span> format includes all the data that Google stores for each task. The meaning of each task property is described 
+                at <a href="https://developers.google.com/google-apps/tasks/v1/reference/tasks#resource">developers.google.com/google-apps/tasks/v1/reference/tasks#resource</a>  
+            </li>
+            <li>
+                The <span class="take-note">Raw CSV</span> format includes everything except the <span class="property-name">links</span> property.
+                <br />
+                <span class="italic">
+                    As far as I am aware, the only use for Task Links is when an email message is turned into a task; 
+                    the link then refers to the original email message.
+                    If tasks are restored into a different account, Task Links would not work (because they would refer to messages in another account).
+                </span>
+            </li>
+            <li>
+                In the <span class="take-note">Raw CSV</span> and <span class="take-note">Python</span> formats, subtasks are related to parent tasks through the <span class="property-name">parent</span> 
+                property. <span class="take-note-smaller">(<a href="#note4">Note 4</a>, <a href="#note5">Note 5</a>)</span>
+            </li>
+            <li>
+                See <a href="#import_export_description">below</a> for a detailed description of the 
+                <span class="take-note">Import/Export CSV</span> format.
+            </li>
+        </ul>
+        
+        
+    </div>
+    
+    <div class="break">
+        Most of the properties are self-explanatory, however the relationship between <span class="property-name">status</span>, <span class="property-name">hidden</span> and <span class="property-name">deleted</span> may require some additional explanation.
+        <ul>
+            <li>
+                Mark a task complete ==> <span class="property-name">status</span> changes from "needsAction" to "completed".
+                <ul>
+                    <li>Task remains visible in [My Order] and [Sort by date] views.</li>
+                </ul>
+            </li>
+            <li>
+                Mark a task complete, and then click [Clear completed] ==> <span class="property-name">status</span> = "completed", 
+                <span class="property-name">hidden</span> = "True"
+                <ul>
+                    <li>
+                         Task only appears in [Completed tasks] view
+                    </li>
+                </ul>
+            </li>
+            <li>
+                Highlight a task, and then click [Delete] ==> <span class="property-name">deleted</span> = "True"
+                <ul>
+                    <li>
+                        Task only appears in [Trash] view <span class="take-note-smaller">(<a href="#note3">Note 3</a>)</span>
+                    </li>
+                </ul>
+            </li>
+            
+        </ul>
+    </div>
+
+
+    <div class="break">
+        <a name="Table1">Table 1 lists the various states and the corresponding task property values.</a>
+    </div>
+
+    <table border="1" cellpadding="5">
+        <caption class="heading" >Table 1: Task states</caption>
+        <tr>
+            <th colspan="3">Task properties <span class="take-note-smaller">(<a href="#note1">Note 1</a>, <a href="#note1">2</a>)</span></th>
+            <th rowspan="2">Description</th><th colspan="3">Visible in View:</th>
+        </tr>
+        <tr>
+            <th><span class="property-name">status</span></th>
+            <th><span class="property-name">deleted</span></th>
+            <th><span class="property-name">hidden</span></th>
+            <th class="view-tr">My order<br />Sort by date</th>
+            <th class="view-tr">Completed tasks</th>
+            <th class="view-tr">Trash<br/><span class="take-note-smaller">(<a href="#note3">Note 3</a>)</span></th>
+        </tr>
+        
+        <tr>
+            <td>needsAction</td><td></td><td></td><td>To be completed, visible in main window</td><td>Yes</td><td>No</td><td>No</td>
+        </tr>
+        <tr>
+            <td>needsAction</td><td>True</td><td></td><td>Deleted incomplete task. Visible only in [Trash]</td><td>No</td><td>No</td><td>Yes</td>
+        </tr>
+        <tr>
+            <td>completed</td><td></td><td></td><td>Marked complete, before clicking [Clear completed]</td><td>Yes</td><td>Yes</td><td>No</td>
+        </tr>
+        <tr>
+            <td>completed</td><td>True</td><td></td><td>Deleted completed task. Visible only in [Trash]</td><td>No</td><td>No</td><td>Yes</td>
+        </tr>
+        <tr>
+            <td>completed</td><td></td><td>True</td><td>Marked complete, after clicking [Clear completed]</td><td>No</td><td>Yes</td><td>No</td>
+        </tr>
+        <tr>
+            <td>needsAction</td><td>True</td><td>True</td> <td class="not-valid" colspan="4"> ======= Not valid =======</td>
+        </tr>
+        <tr>
+            <td>needsAction</td><td></td><td>True</td><td class="not-valid" colspan="4"> ======= Not valid =======</td>
+        </tr>
+        <tr>
+            <td>completed</td><td>True</td><td>True</td>   <td class="not-valid" colspan="4"> ======= Not valid =======</td>
+        </tr>
+    </table>
+ 
+    <div class="break">
+    </div>
+ 
+    <h3>Other problems</h3>
+    <div class="break">
+        Date/time properties such as the <span class="property-name">completed</span> property have occassionally contained invalid timestamps, 
+        where the year is stored as a large negative number such as -1701567. 
+        In this case, the application exports the value "1900-01-01 00:00:00" instead.
+        
+    </div>
+    
+    <a name="import_export_description"></a>
+    <h2>Importing and exporting</h2>
+    
+    <div class="break">
+        Google Tasks Backup supports 2 different Import/Export formats; <span class="take-note">GTBak</span> and <span class="take-note">CSV</span>. 
+    </div>
+    
+    <h3>Import/Export GTBak format</h3>
+    <div class="break">
+        Files exported from Google Tasks Backup in the <span class="take-note">Import/Export GTBak</span> format have a filename format 
+        of <span class="fixed-font">tasks_gtb_XXXXXX.GTBak</span>, where <span class="fixed-font">XXXXXX</span> identifies 
+        the account name and export date. 
+    </div>
+    <div class="break">
+        The GTBak file uses Python <a href="http://docs.python.org/library/pickle.html">pickle serialisation</a> to ensure that no extended character information is lost or modified (which can happen with the CSV format). This format is not easily editable by humans.
+    </div>
+    <div class="break">
+        <span class="take-note">The GTBak format is strongly recommended</span>, especially where tasks may contain international or extended characters, such as accents or special symbols.
+    </div>
+    
+    <h3>Import/Export CSV format</h3>
+    <div class="break">
+        Files exported from Google Tasks Backup in the <span class="take-note">Import/Export CSV</span> format have a filename format 
+        of <span class="fixed-font">tasks_import_export_XXXXXX.csv</span>, where <span class="fixed-font">XXXXXX</span> identifies 
+        the account name and export date. 
+    </div>
+    <div class="break">
+        The file is a standard Windows-format CSV (comma-separated-values) file, and includes 
+        all task properties required to recreate the tasks, including tasklist name and <span class="no-break">task/sub-task</span> relationships.
+    </div>
+    <div class="break">
+        The file can be edited in a text editor such as <a href="http://notepad-plus-plus.org/">Notepad++</a> before being imported. It is not recommended to edit this file with a spreadsheet program, as programs such as Excel and OpenOffice Calc tend to corrupt the data. The import file must observe the following rules;
+        <ul>
+            <li>The first row is a header row, and contains the column names.</li>
+            <li>Tasks must be grouped by tasklist.</li>
+            <li>Tasks must appear in the file in the order that they should appear in the standard "My Order" view in Google Tasks. See the <a href="#import_example">example</a> below.</li>
+            <li>Task state must be consistent. Refer to <a href="#Table2">Table 2</a> for valid states.</li>
+            <li>All fields except depth are double-quote delimited strings.</li>
+            <li>Double-quotes within text must be escaped (i.e., replace the single <span class="fixed-font">"</span> with <span class="fixed-font">""</span>)</li>
+            <li>There must be no spaces between fields and the comma separators.</li>
+            <li>Multi-line text is allowed in the notes field, by using <span class="fixed-font">\n</span> as the line break.</li>
+            <li>A blank field may be indicated by <span class="fixed-font">""</span> (empty string) or by having no space between consecutive commas.</li>
+            <li>Dates and times are UTC, and must be formatted as indicated in <a href="#Table1">Table 1</a><br />
+                <span class="italic">Note that the "UTC " prefix on date fields serves two purposes. It reminds the user that the fields are UTC, and it prevents spreadsheet programs such as Excel and OpenOffice Calc from rewriting date and time formatting.</span></li>
+            <li>Editing the CSV file with spreadsheet programs such as Excel or Open Office Calc is not recommended;</li>
+                <ul>
+                    <li>
+                        Spreadsheets try to interpret all data as numeric, which often results in corrupted data. 
+                        For example, a text field that starts with a dash will be interpretted by Excel as an invalid number, 
+                        resulting in <span class="fixed-font">"#NAME?"</span> rather than the original text
+                    </li>
+                    <li>
+                        If a field looks like a date, spreadsheet programs will generally convert the date to the spreadhseet's own format.
+                        That date format is often not compatible with the format required to import. 
+                        For example, <span class="fixed-font">"2012-05-11"</span> may be changed to <span class="fixed-font">"5/11/12"</span> by Excel.
+                    </li>
+                    <li>
+                        I have had some success with OpenOffice Calc by choosing "Separated by Comma" and "Quoted field as text"
+                    </li>
+                </ul>
+            <li>
+                This format does not include Task Links. 
+                <br />
+                <span class="italic">
+                    As far as I am aware, the only use for Task Links is when an email message is turned into a task; 
+                    the link then refers to the original email message.
+                    If tasks are restored into a different account, Task Links would not work (because they would refer to messages in another account).
+                </span>
+            </li>
+        </ul>
+    </div>
+    <div class="break">
+        <h3>Cautions when importing;</h3>
+        <ul>
+            <li>
+            Note that tasklist names are case-sensitive, so if you have an existing tasklist name <span class="fixed-font">"Apples"</span>, and the tasklist name in your import data is <span class="fixed-font">"apples"</span>, a new tasklist named <span class="fixed-font">"apples"</span> will be created even if you have chosen "Add task to existing tasklists."
+            </li>
+            <li>
+                When importing tasks into an existing tasklist, Google Tasks Backup is not able to check for duplicate tasks. 
+                The imported tasks will simply be added to the specified tasklist, potentially resulting in duplicate tasks. 
+                If you think that the imported data may contain tasks which already exist in your existing tasklist, you may 
+                wish to create new tasklists by appending something to the imported tasklist name (either the automatically generated 
+                date and time, or your own text).
+            </li>
+            <li>
+                If you are sure that the import data contains the most current list of tasks, you can choose to delete existing tasklists, 
+                so that the newly created tasklists will contain only the imported data.
+            </li>
+            <li>
+                If either the existing or imported data has duplicate tasklist names (not recommended, but allowed by Google), 
+                all of the imported tasks in that tasklist will be added to ONE of those duplicate tasklists.
+            </li>
+        </ul>
+    </div>
+    <a name="Table2"></a>
+    <table border="1" cellpadding="5">
+        <caption class="heading" >Table 2: Import file format</caption>
+        <tr>
+            <th>
+                Column name
+            </th>
+            <th>
+                Description
+            </th>
+        </tr>
+        <tr>
+            <td>tasklist_name</td>
+            <td>
+                If this is the name of an existing tasklist, tasks will be added to that list.
+                <br />
+                If the tasklist does not exist, a new tasklist will be created.
+            </td>
+        </tr>
+        <tr>
+            <td>title</td>
+            <td>
+                Task title.
+            </td>
+        </tr><tr>
+            <td>notes</td>
+            <td>
+                Task notes. May be multi-line, using <span class="fixed-font">\n</span> as the line break.
+            </td>
+        </tr>
+        <tr>
+            <td>status</td>
+            <td>
+                Can be either <span class="fixed-font">"needsAction"</span> or <span class="fixed-font">"completed"</span>
+            </td>
+        </tr>
+        <tr>
+            <td>due</td>
+            <td>
+                If the task has a due date, the date that the task is due, in the format <span class="fixed-font">"UTC YYYY-mm-dd"</span>
+                <br />
+                If the task does not have a due date, leave this field blank
+                <br />
+                <span class="take-note">The due date field must start with <span class="fixed-font">UTC </span>
+            </td>
+        </tr>
+        <tr>
+            <td>completed</td>
+            <td>
+                If the task has been completed, the date and time that the task was completed, in the format <span class="fixed-font">"UTC YYYY-mm-dd HH:MM:SS"</span>
+                <br />
+                If the task has not been completed, leave this field blank
+                <br />
+                <span class="take-note">The completed date-time field must start with <span class="fixed-font">UTC </span>
+            </td>
+        </tr>
+        <tr>
+            <td>deleted</td>
+            <td>
+                If the task has been deleted (see above), the single word <span class="fixed-font">"True"</span>
+                <br />
+                If the task has not been deleted, leave this field blank
+            </td>
+        </tr>
+        <tr>
+            <td>hidden</td>
+            <td>
+                If the task has been hidden (see above), the single word <span class="fixed-font">"True"</span>
+                <br />
+                If the task has not been hidden, leave this field blank
+            </td>
+        </tr>
+        <tr>
+            <td>depth</td>
+            <td>
+                The depth of the task indicates the parent-child relationship between tasks. 
+                <br />
+                Depth is a positive number. Higher numbers indicate greater depth.
+                <br />
+                Tasks with depth 0 are root tasks.
+            </td>
+        </tr>
+    </table>
+    
+    <a name="import_example"></a>
+    <div class="minor-heading">Example import/export file;</div>
+    <p class="comment">Note the <span class="fixed-font">\n</span> in the multi-line notes in "Second subtask", and the escaped double-quotes in the notes for "Second task"
+    <div class="break fixed-font smaller-font">
+        "tasklist_name","title","notes","status","due","completed","deleted","hidden",depth
+        <br />
+        "My Tasklist","First task","This is a root task","needsAction","UTC 2012-08-23",,,,0
+        <br />
+        "My Tasklist","First subtask","This is a subtask of the first task","needsAction","UTC 2012-08-19",,,,1
+        <br />
+        "My Tasklist","Second subtask","This is a subtask\nof the first subtask","needsAction","UTC 2012-04-21",,,,2
+        <br />
+        "My Tasklist","Third subtask","This is a subtask of the second subtask","needsAction",,,,,3
+        <br />
+        "My Tasklist","Fourth subtask","This is a 2nd subtask of the first subtask","needsAction","UTC 2012-07-25",,,,1
+        <br />
+        "My Tasklist","Second task","This is another ""root"" task","completed",,"UTC 2012-04-22 02:42:36",,,0
+    </div>
+    
+    <div class="minor-heading">This is displayed in Google Tasks as;</div>
+    <div>
+        <img class="sample-image" src="/static/Example-Tasks-My_order.PNG">
+    </div>
+    
+    <div class="minor-heading">Google Tasks Backup displays this as;</div>
+    <div class="task-sample">
+        <div class="tasklistheading">
+            Task List: My Tasklist - 6 tasks.
+        </div>
+        <div class="tasks">
+            <div style="padding-left:0px" class="task-html1 ">
+                <div>
+                    <span class="status-cell">[ &nbsp;]</span>
+                    <span class="task-title-html1">First task</span>
+                </div>
+                <div class="task-details-html1"><div class="task-notes">This is a root task</div><div class="task-attribute">
+                    <span class="fieldlabel">Due: </span>Thu, 23 Aug 2012 UTC</div>
+                </div>  <!-- End of task details div -->
+            </div> <!-- End of task div -->
+            
+            <div style="padding-left:40px" class="task-html1 ">
+                <div>
+                    <span class="status-cell">[ &nbsp;]</span>
+                    <span class="task-title-html1">First subtask</span>
+                </div>
+                <div class="task-details-html1"><div class="task-notes">This is a subtask of the first task</div><div class="task-attribute">
+                    <span class="fieldlabel">Due: </span>Sun, 19 Aug 2012 UTC</div>
+                </div>  <!-- End of task details div -->
+            </div> <!-- End of task div -->
+            
+            <div style="padding-left:80px" class="task-html1 ">
+                <div>
+                    <span class="status-cell">[ &nbsp;]</span>
+                    <span class="task-title-html1">Second subtask</span>
+                </div>
+                <div class="task-details-html1"><div class="task-notes">This is a subtask<br>of the first subtask</div><div class="task-attribute">
+                    <span class="fieldlabel">Due: </span>Sat, 21 Apr 2012 UTC</div>
+                </div>  <!-- End of task details div -->
+            </div> <!-- End of task div -->
+            
+            <div style="padding-left:120px" class="task-html1 ">
+                <div>
+                    <span class="status-cell">[ &nbsp;]</span>
+                    <span class="task-title-html1">Third subtask</span>
+                </div>
+                <div class="task-details-html1"><div class="task-notes">This is a subtask of the second subtask</div>
+                </div>  <!-- End of task details div -->
+            </div> <!-- End of task div -->
+            
+            <div style="padding-left:40px" class="task-html1 ">
+                <div>
+                    <span class="status-cell">[ &nbsp;]</span>
+                    <span class="task-title-html1">Fourth subtask</span>
+                </div>
+                <div class="task-details-html1"><div class="task-notes">This is a 2nd subtask of the first subtask</div><div class="task-attribute">
+                    <span class="fieldlabel">Due: </span>Wed, 25 Jul 2012 UTC</div>
+                </div>  <!-- End of task details div -->
+            </div> <!-- End of task div -->
+            
+            <div style="padding-left:0px" class="task-html1 dim">
+                <div>
+                    <span class="status-cell">✓</span>
+                    <span class="task-title-html1">Second task</span>
+                </div>
+                <div class="task-details-html1"><div class="task-attribute">
+                    <span class="fieldlabel">COMPLETED:</span> 02:42 Sun, 22 Apr 2012 UTC</div><div class="task-notes">This is another "root" task</div>
+                </div>  <!-- End of task details div -->
+            </div> <!-- End of task div -->
+            
+        </div>    
+    </div>
+    
+        
+    <hr>
+    
+    <div class="break">
+    </div>
+    
+    <div class="heading">
+        <a name="notes">Notes</a>
+    </div>
+    <table  class="format-selection">
+        <tr>
+            <td class="note-heading-smaller">
+                <a name="note1">Note 1 - </a>
+            </td>
+            <td>
+                <span class="take-note">CAUTION:</span> The Outlook, RTM and iCalendar file formats do not have fields for 
+                <span class="property-name">deleted</span> or <span class="property-name">hidden</span>, so those programs 
+                will display deleted and/or hidden tasks as normal tasks. 
+                Unless you have a specific reason, do not include <span class="take-note">deleted</span> or 
+                <span class="take-note">hidden</span> tasks when downloading for applications such as Outlook, RTM or iCalendar.
+            </td>
+        </tr>
+        <tr>
+            <td class="note-heading-smaller">
+                <a name="note2">Note 2 - </a>
+            </td>
+            <td>
+                All 3 properties are stored by Google as strings. 
+                The <span class="property-name">status</span> field may be either "needsAction" or "completed". 
+                The <span class="property-name">deleted</span> and <span class="property-name">hidden</span> properties can be 
+                either an empty string (indicating false), or the word "True".
+            </td>
+        </tr>
+        <tr>
+            <td class="note-heading-smaller">
+                <a name="note3">Note 3 - </a>
+            </td>
+            <td>
+                When tasks are deleted, they are marked as Hidden and moved to the [Trash] view.
+                <br/>
+                According to Google, deleted tasks stay in the Trash (deleted = True) for "some period of time" and are then auto deleted. 
+                I have noticed deleted tasks in my Trash that are up to 10 months old. There does not appear to be any way to force a task to be actually deleted. 
+                That is, the Trash bin cannot be emptied by the user.
+            </td>
+        </tr>
+        <tr>
+            <td class="note-heading-smaller">
+                <a name="note4">Note 4 - </a>
+            </td>
+            <td>
+                <span class="take-note">CAUTION:</span> Sometimes, tasks can become corrupted, leaving an invalid <span class="property-name">parent</span> value. These tasks still exist in the Google Tasks database, although Google does not display them.
+                <div class="small-break">
+                </div>
+                When a sub-task is deleted or hidden, the sub-task retains the <span class="property-name">parent</span> value, so that Google can restore the task to the correct parent. However, that <span class="property-name">parent</span> value may be invalid for a task that has been deleted or hidden, or whose parent was hidden, deleted or moved whilst the subtask was deleted. It may even refer to a task in another tasklist!
+                <div class="small-break">
+                </div>
+                One common way that tasks become corrupted is;
+                <ol>
+                    <li>Start with nested tasks A/B/C/D</li>
+                    <li>Delete D</li>
+                    <li>Delete C</li>
+                    <li>Restore D from Trash</li>
+                </ol>
+                Since task D's parent no longer exists, Google doesn't know where to put the task,
+                so it becomes an (invisible) orphan. 
+                <div class="small-break">
+                </div>
+                Invalid tasks are not exported to file or email, however the tasks display page provides an option to display invalid/corrupted tasks.
+            </td>
+        </tr>
+        <tr>
+            <td class="note-heading-smaller">
+                <a name="note5">Note 5 - </a>
+            </td>
+            <td>
+                Tasks may also be corrupted by some third-party task organiser programs, especially those that do not (properly) support sub-tasks, or if communications is interrupted during a sync.
+                <div class="small-break">
+                </div>
+                Normally, a completed task cannot have incomplete sub-tasks (which makes sense). The Google Tasks web interface at 
+                <a href="https://mail.google.com/tasks/canvas?pli=1">mail.google.com/tasks/canvas?pli=1</a> takes care of that; marking a parent task complete automatically marks all it's subtasks complete. Some third party apps don't do that, thereby leaving a completed task with incompleted subtasks.
+                <div class="small-break">
+                </div>
+                If the user then clears completed tasks, the completed parent is marked as hidden. If the user exports with hidden tasks excluded, then the exported sub-tasks no longer have parents.
+                <div class="small-break">
+                </div>
+                Simarly, if exporting tasks with the "Include completed tasks?" option unchecked, the completed parent task will not be exported, but the incomplete sub-tasks will, resulting in orphaned tasks which cannot be properly processed, because the sub-task's parent does not exist.
+                <div class="small-break">
+                </div>
+                Invalid tasks are not exported to file or email, however the tasks display page provides an option to display invalid/corrupted tasks.
+            </td>
+        </tr>
+    </table>
+
+        
+    <div class="break">
+    </div>
+    
+    <hr>
+
+        <div class="break">
+            Icons thanks to <a href="http://www.visualpharm.com/">Visual Pharm</a>, <a href="http://www.iconarchive.com/show/sleek-xp-software-icons-by-deleket/Windows-Close-Program-icon.html">Deleket</a> and <a href="http://www.gettyicons.com/free-icon/133/shimmer-icon-set/free-warning-icon-png/">Creative Freedom</a>
+        </div>
+        <div class="break">
+            Popup help window script thanks to <a href="http://yensdesign.com/2008/09/how-to-create-a-stunning-and-smooth-popup-using-jquery/">yendesign</a>
+        </div>
+        <div class="break">
+            Popup calendar script thanks to <a href="http://www.rainforestnet.com">TengYong Ng</a>
+        </div>
+  </body>
+</html>
